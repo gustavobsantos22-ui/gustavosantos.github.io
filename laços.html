@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoffeeMart Premium | Mercado Digital</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+
+body { background: #f4f7f6; display: flex; flex-direction: column; min-height: 100vh; }
+
+header {
+    background: #064497;
+    color: white;
+    padding: 20px 50px;
+    text-align: center;
+    position: relative;
+}
+
+header h1 span { color: #f39c12; }
+
+.logout-btn {
+    position: absolute;
+    right: 50px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,0.1);
+    color: white;
+    padding: 8px 18px;
+    border-radius: 5px;
+    text-decoration: none;
+}
+
+/* SEARCH */
+.search-box {
+    margin-top: 15px;
+}
+.search-box input {
+    padding: 10px;
+    width: 60%;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+}
+
+/* LAYOUT */
+.wrapper {
+    display: flex;
+    max-width: 1400px;
+    margin: auto;
+    padding: 30px;
+    gap: 20px;
+}
+
+.vitrine {
+    flex: 3;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.item {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.item:hover { transform: translateY(-3px); }
+
+.preco { color: #27ae60; font-weight: bold; }
+
+.add-btn {
+    background: #f39c12;
+    color: white;
+    border: none;
+    padding: 10px;
+    width: 100%;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+/* CARRINHO */
+.carrinho {
+    flex: 1;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    position: sticky;
+    top: 20px;
+}
+
+.cart-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 0.9em;
+}
+
+.remove-btn {
+    background: transparent;
+    border: none;
+    color: red;
+    cursor: pointer;
+}
+
+/* BOTÃO */
+.checkout-btn {
+    background: #064497;
+    color: white;
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+/* TOAST */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #27ae60;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    animation: fade 3s ease;
+}
+
+@keyframes fade {
+    0% { opacity: 0; transform: translateY(20px); }
+    20% { opacity: 1; transform: translateY(0); }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>☕ Mercado <span>CoffeeMart</span> Premium</h1>
+
+    <div class="search-box">
+        <input type="text" id="search" placeholder="Buscar produtos...">
+    </div>
+
+    <a href="#" class="logout-btn">Sair</a>
+</header>
+
+<div class="wrapper">
+    <div class="vitrine" id="product-vitrine"></div>
+
+    <aside class="carrinho">
+        <h2>🛒 Carrinho</h2>
+        <ul id="cart-items-list"></ul>
+
+        <h3>Total: <span id="cart-total">R$ 0,00</span></h3>
+
+        <button class="checkout-btn" id="btn-finalizar">Finalizar Compra</button>
+    </aside>
+</div>
+
+<script>
+class Estoque {
+    constructor(produtos) {
+        this.produtos = produtos;
+    }
+    getTodos() { return this.produtos; }
+    buscarPorId(id) { return this.produtos.find(p => p.id === id); }
+}
+
+class CarrinhoManager {
+    constructor() {
+        this.KEY = "carrinho";
+        this.itens = JSON.parse(localStorage.getItem(this.KEY)) || [];
+    }
+
+    salvar() {
+        localStorage.setItem(this.KEY, JSON.stringify(this.itens));
+    }
+
+    adicionar(produto) {
+        const item = this.itens.find(i => i.id === produto.id);
+        if (item) item.quantidade++;
+        else this.itens.push({ ...produto, quantidade: 1 });
+        this.salvar();
+    }
+
+    remover(id) {
+        this.itens = this.itens.filter(i => i.id !== id);
+        this.salvar();
+    }
+
+    limpar() {
+        this.itens = [];
+        this.salvar();
+    }
+
+    total() {
+        return this.itens.reduce((s, i) => s + i.preco * i.quantidade, 0);
+    }
+}
+
+class App {
+    constructor(produtos) {
+        this.estoque = new Estoque(produtos);
+        this.carrinho = new CarrinhoManager();
+
+        this.vitrine = document.getElementById("product-vitrine");
+        this.lista = document.getElementById("cart-items-list");
+        this.total = document.getElementById("cart-total");
+
+        this.init();
+    }
+
+    init() {
+        this.render(this.estoque.getTodos());
+
+        document.getElementById("search").addEventListener("input", e => {
+            const termo = e.target.value.toLowerCase();
+            const filtrados = this.estoque.getTodos().filter(p =>
+                p.nome.toLowerCase().includes(termo)
+            );
+            this.render(filtrados);
+        });
+
+        document.getElementById("btn-finalizar").onclick = () => this.finalizar();
+    }
+
+    toast(msg) {
+        const t = document.createElement("div");
+        t.className = "toast";
+        t.innerText = msg;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 3000);
+    }
+
+    render(produtos) {
+        this.vitrine.innerHTML = "";
+
+        produtos.forEach(p => {
+            this.vitrine.innerHTML += `
+                <div class="item">
+                    <h3>${p.nome}</h3>
+                    <p class="preco">R$ ${p.preco.toFixed(2)}</p>
+                    <button class="add-btn" onclick="app.add(${p.id})">Adicionar</button>
+                </div>
+            `;
+        });
+
+        this.renderCarrinho();
+    }
+
+    add(id) {
+        const p = this.estoque.buscarPorId(id);
+        this.carrinho.adicionar(p);
+        this.toast("Produto adicionado!");
+        this.renderCarrinho();
+    }
+
+    remove(id) {
+        this.carrinho.remover(id);
+        this.renderCarrinho();
+    }
+
+    renderCarrinho() {
+        this.lista.innerHTML = "";
+
+        if (this.carrinho.itens.length === 0) {
+            this.lista.innerHTML = "<li>Carrinho vazio</li>";
+        }
+
+        this.carrinho.itens.forEach(i => {
+            this.lista.innerHTML += `
+                <li class="cart-item">
+                    ${i.nome} (x${i.quantidade})
+                    <button class="remove-btn" onclick="app.remove(${i.id})">❌</button>
+                </li>
+            `;
+        });
+
+        this.total.innerText =
+            "R$ " + this.carrinho.total().toFixed(2).replace(".", ",");
+    }
+
+    finalizar() {
+        if (this.carrinho.itens.length === 0) {
+            this.toast("Carrinho vazio!");
+            return;
+        }
+
+        this.toast("Compra finalizada com sucesso!");
+        this.carrinho.limpar();
+        this.renderCarrinho();
+    }
+}
+
+const PRODUTOS = [
+    {id:1,nome:"Café Premium",preco:24.9},
+    {id:2,nome:"Leite 1L",preco:5.5},
+    {id:3,nome:"Pão Artesanal",preco:8},
+    {id:4,nome:"Arroz 5kg",preco:29.9}
+];
+
+const app = new App(PRODUTOS);
+</script>
+
+</body>
+</html>

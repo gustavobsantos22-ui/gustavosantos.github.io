@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Mercado Coffee</title>
+
+<style>
+body {
+    font-family: Arial;
+    margin: 0;
+    background: #eef2f5;
+}
+
+header {
+    background: #2563eb;
+    color: white;
+    text-align: center;
+    padding: 18px;
+}
+
+.wrapper {
+    display: flex;
+    gap: 15px;
+    padding: 15px;
+}
+
+/* caixas */
+.box {
+    background: white;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+#users { flex: 1; }
+#produtos { flex: 2; }
+#carrinho { flex: 1; }
+
+.item {
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 10px;
+    background: #fafafa;
+}
+
+button {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 6px;
+    margin-top: 6px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #1e4ed8;
+}
+
+ul {
+    padding-left: 15px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+☕ Mercado Coffee
+</header>
+
+<div class="wrapper">
+
+<!-- USUÁRIOS -->
+<div class="box" id="users">
+<h3>👤 Usuários</h3>
+<ul id="users-list"></ul>
+</div>
+
+<!-- PRODUTOS -->
+<div class="box" id="produtos"></div>
+
+<!-- CARRINHO -->
+<div class="box" id="carrinho">
+<h3>🛒 Carrinho</h3>
+
+<input id="cep" placeholder="Digite seu CEP" style="width:100%;padding:6px;">
+<button onclick="app.buscarCEP()" style="width:100%;margin-top:5px;">Buscar CEP</button>
+
+<p id="endereco"></p>
+
+<ul id="cart"></ul>
+
+<p><b>Total:</b> R$ <span id="total">0</span></p>
+</div>
+
+</div>
+
+<script>
+
+class Estoque {
+    constructor(produtos) {
+        this.produtos = produtos;
+    }
+
+    getAll() {
+        return this.produtos;
+    }
+}
+
+class Carrinho {
+    constructor() {
+        this.itens = [];
+    }
+
+    add(p) {
+        let item = this.itens.find(i => i.id === p.id);
+
+        if (item) item.qtd++;
+        else this.itens.push({...p, qtd: 1});
+    }
+
+    total() {
+        return this.itens.reduce((t, i) => t + i.preco * i.qtd, 0);
+    }
+}
+
+class App {
+    constructor(produtos) {
+        this.estoque = new Estoque(produtos);
+        this.carrinho = new Carrinho();
+
+        this.produtosDiv = document.getElementById("produtos");
+        this.cart = document.getElementById("cart");
+        this.total = document.getElementById("total");
+        this.users = document.getElementById("users-list");
+        this.endereco = "";
+
+        this.loadProdutos();
+        this.loadUsers();
+    }
+
+    /* PRODUTOS */
+    loadProdutos() {
+        this.produtosDiv.innerHTML = "<h3>🛍 Produtos</h3>";
+
+        this.estoque.getAll().forEach(p => {
+            let div = document.createElement("div");
+            div.className = "item";
+
+            div.innerHTML = `
+                <b>${p.nome}</b><br>
+                R$ ${p.preco.toFixed(2)}<br>
+                <button>Adicionar</button>
+            `;
+
+            div.querySelector("button").onclick = () => {
+                this.carrinho.add(p);
+                this.updateCart();
+            };
+
+            this.produtosDiv.appendChild(div);
+        });
+    }
+
+    /* CARRINHO */
+    updateCart() {
+        this.cart.innerHTML = "";
+
+        this.carrinho.itens.forEach(i => {
+            let li = document.createElement("li");
+            li.textContent = `${i.nome} x${i.qtd}`;
+            this.cart.appendChild(li);
+        });
+
+        this.total.textContent = this.carrinho.total().toFixed(2);
+
+        if (this.endereco) {
+            let p = document.createElement("p");
+            p.innerHTML = "<b>Entrega:</b><br>" + this.endereco;
+            this.cart.appendChild(p);
+        }
+    }
+
+    /* USUÁRIOS */
+    async loadUsers() {
+        let res = await fetch("https://jsonplaceholder.typicode.com/users");
+        let data = await res.json();
+
+        const nomes = ["João", "Maria", "Pedro", "Ana", "Lucas", "Bruno", "Carla"];
+        const cidades = ["SP", "RJ", "MG", "PR", "BA"];
+
+        this.users.innerHTML = "";
+
+        data.forEach((u, i) => {
+            let nome = nomes[i % nomes.length];
+            let email = nome.toLowerCase() + "@gmail.com";
+            let cidade = cidades[i % cidades.length];
+
+            let li = document.createElement("li");
+            li.innerHTML = `
+                <b>${nome}</b><br>
+                ${email}<br>
+                📍 ${cidade}
+            `;
+
+            this.users.appendChild(li);
+        });
+    }
+
+    /* VIACEP MELHORADO */
+    async buscarCEP() {
+        let cep = document.getElementById("cep").value.replace(/\D/g, "");
+
+        if (cep.length !== 8) {
+            alert("CEP inválido");
+            return;
+        }
+
+        let res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+        let data = await res.json();
+
+        if (data.erro) {
+            document.getElementById("endereco").innerHTML = "CEP não encontrado";
+            this.endereco = "";
+            return;
+        }
+
+        this.endereco = `
+            ${data.logradouro || "Sem rua"}<br>
+            ${data.bairro || "Sem bairro"}<br>
+            ${data.localidade} - ${data.uf}
+        `;
+
+        document.getElementById("endereco").innerHTML = `
+            <b>Endereço:</b><br>
+            ${this.endereco}
+        `;
+
+        this.updateCart();
+    }
+}
+
+/* PRODUTOS */
+const PRODUTOS = [
+ {id:1, nome:"Café", preco:25},
+ {id:2, nome:"Leite", preco:6},
+ {id:3, nome:"Pão", preco:8},
+ {id:4, nome:"Arroz", preco:30},
+ {id:5, nome:"Feijão", preco:10}
+];
+
+const app = new App(PRODUTOS);
+
+</script>
+
+</body>
+</html>

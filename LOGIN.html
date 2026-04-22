@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoffeeMart | Login</title>
+    <style>
+        /* Estilos Base */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        
+        body { 
+            min-height: 100vh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            background-color: #064497; 
+            padding: 20px; 
+        }
+
+        .login-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 380px;
+            text-align: center;
+        }
+
+        .header h1 { color: #064497; margin-bottom: 20px; }
+        .header span { color: #f39c12; }
+
+        .form-group { text-align: left; margin-bottom: 15px; }
+        label { display: block; font-size: 14px; margin-bottom: 5px; color: #333; }
+        
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid #ccc; 
+            border-radius: 5px; 
+            outline: none; 
+        }
+
+        .login-btn {
+            width: 100%; 
+            padding: 12px; 
+            background: #27ae60; 
+            color: white;
+            border: none; 
+            border-radius: 5px; 
+            font-weight: bold;
+            cursor: pointer; 
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        .login-btn:hover { background: #219150; }
+
+        .btn-funcionario {
+            display: block;
+            margin-top: 20px;
+            padding: 10px;
+            background: transparent;
+            color: #064497;
+            border: 2px dashed #064497;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .btn-funcionario:hover {
+            background: #064497;
+            color: white;
+        }
+
+        /* Seção de Contas Salvas */
+        .contas-salvas { 
+            margin-top: 30px; 
+            border-top: 1px solid #eee; 
+            padding-top: 20px; 
+        }
+        .contas-salvas h3 { font-size: 14px; color: #666; margin-bottom: 15px; }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid transparent;
+            transition: 0.2s;
+        }
+        .user-item:hover { border-color: #064497; background: #eef2f7; }
+
+        .user-click-area { 
+            display: flex; 
+            align-items: center; 
+            flex-grow: 1; 
+            cursor: pointer; 
+        }
+
+        .user-avatar { 
+            width: 35px; 
+            height: 35px; 
+            background: #064497; 
+            color: white; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            margin-right: 12px; 
+            font-weight: bold; 
+            font-size: 12px; 
+        }
+
+        .user-info { text-align: left; }
+        .user-info p { font-size: 14px; font-weight: bold; color: #333; }
+
+        .btn-excluir {
+            background: #ff7675;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+        .btn-excluir:hover { background: #d63031; transform: scale(1.1); }
+
+        #erro { color: #e74c3c; font-size: 13px; display: none; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <div class="header">
+        <h1>Coffee<span>Mart</span></h1>
+    </div>
+
+    <div id="form-container">
+        <h2 style="font-size: 18px; margin-bottom: 20px;">Acessar Conta</h2>
+        <p id="erro">Senha incorreta!</p>
+        <form id="loginForm">
+            <div class="form-group">
+                <label>Telefone:</label>
+                <input type="text" id="tel" placeholder="(00) 00000-0000" required>
+            </div>
+            <div class="form-group">
+                <label>Senha:</label>
+                <input type="password" id="senha" placeholder="Sua senha" required>
+            </div>
+            <button type="submit" class="login-btn">ENTRAR E SALVAR</button>
+        </form>
+
+        <a href="CadastroFuncionario.html" class="btn-funcionario">
+            É um funcionário? Clique aqui!
+        </a>
+    </div>
+
+    <div class="contas-salvas" id="secaoContas" style="display: none;">
+        <h3>Contas salvas:</h3>
+        <div id="listaUsuarios"></div>
+    </div>
+</div>
+
+<script>
+    /**
+     * Classe responsável por gerenciar os dados no LocalStorage
+     */
+    class StorageService {
+        static KEY_USUARIOS = 'usuarios_cadastrados';
+        static KEY_ATIVO = 'usuarioAtivo';
+
+        static getUsuarios() {
+            return JSON.parse(localStorage.getItem(this.KEY_USUARIOS)) || [];
+        }
+
+        static salvarUsuarios(usuarios) {
+            localStorage.setItem(this.KEY_USUARIOS, JSON.stringify(usuarios));
+        }
+
+        static setUsuarioAtivo(tel) {
+            localStorage.setItem(this.KEY_ATIVO, tel);
+        }
+    }
+
+    /**
+     * Classe responsável pela Interface e Lógica de Negócio
+     */
+    class LoginManager {
+        constructor() {
+            this.form = document.getElementById('loginForm');
+            this.listaEl = document.getElementById('listaUsuarios');
+            this.secaoContas = document.getElementById('secaoContas');
+            this.erroMsg = document.getElementById('erro');
+            this.inputTel = document.getElementById('tel');
+            this.inputSenha = document.getElementById('senha');
+
+            this.init();
+        }
+
+        init() {
+            // Carregar contas ao iniciar
+            this.renderizarContas();
+
+            // Adicionar evento de submit
+            this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+        }
+
+        renderizarContas() {
+            const usuarios = StorageService.getUsuarios();
+            
+            if (usuarios.length === 0) {
+                this.secaoContas.style.display = 'none';
+                return;
+            }
+
+            this.secaoContas.style.display = 'block';
+            this.listaEl.innerHTML = '';
+
+            usuarios.forEach((user, index) => {
+                const item = this.criarTemplateUsuario(user, index);
+                this.listaEl.appendChild(item);
+            });
+        }
+
+        criarTemplateUsuario(user, index) {
+            const container = document.createElement('div');
+            container.className = 'user-item';
+            
+            const iniciais = user.tel.replace(/\D/g, '').substring(0, 2);
+
+            container.innerHTML = `
+                <div class="user-click-area">
+                    <div class="user-avatar">${iniciais}</div>
+                    <div class="user-info">
+                        <p>${user.tel}</p>
+                    </div>
+                </div>
+                <button class="btn-excluir" title="Excluir conta">✕</button>
+            `;
+
+            // Eventos dinâmicos
+            container.querySelector('.user-click-area').onclick = () => this.selecionarUsuario(user.tel);
+            container.querySelector('.btn-excluir').onclick = () => this.excluirUsuario(index);
+
+            return container;
+        }
+
+        selecionarUsuario(tel) {
+            this.inputTel.value = tel;
+            this.inputSenha.focus();
+            this.erroMsg.style.display = 'none';
+        }
+
+        excluirUsuario(index) {
+            if (confirm("Deseja realmente excluir esta conta salva?")) {
+                const usuarios = StorageService.getUsuarios();
+                usuarios.splice(index, 1);
+                StorageService.salvarUsuarios(usuarios);
+                this.renderizarContas();
+            }
+        }
+
+        handleSubmit(e) {
+            e.preventDefault();
+            const tel = this.inputTel.value;
+            const senha = this.inputSenha.value;
+            
+            let usuarios = StorageService.getUsuarios();
+            const usuarioExistente = usuarios.find(u => u.tel === tel);
+
+            if (usuarioExistente) {
+                if (usuarioExistente.senha === senha) {
+                    this.entrar(tel);
+                } else {
+                    this.erroMsg.style.display = 'block';
+                }
+            } else {
+                usuarios.push({ tel, senha });
+                StorageService.salvarUsuarios(usuarios);
+                this.entrar(tel);
+            }
+        }
+
+        entrar(tel) {
+            StorageService.setUsuarioAtivo(tel);
+            alert("Login realizado com sucesso!");
+            window.location.href = "Mercado.html";
+        }
+    }
+
+    // Instanciar a classe ao carregar a página
+    document.addEventListener('DOMContentLoaded', () => {
+        new LoginManager();
+    });
+</script>
+
+</body>
+</html>

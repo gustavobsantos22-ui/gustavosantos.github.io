@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Demonstração de Operadores - CoffeeMart</title>
+</head>
+
+<body>
+
+<h1>🧮 Demonstração de Operadores no CoffeeMart</h1>
+
+<p id="saida"></p>
+
+<script>
+
+// Dados simulados
+let precoProduto = 50;
+let quantidade = 2;
+let cupomDesconto = 10; // em %
+let distanciaEntrega = 8; // km
+
+let subtotal = precoProduto * quantidade; // multiplicação
+let desconto = subtotal * (cupomDesconto / 100); // divisão + multiplicação
+let totalComDesconto = subtotal - desconto; // subtração
+
+// =========
+let freteGratis = distanciaEntrega <= 10; // menor ou igual
+// CORREÇÃO: Usando >= para incluir compras de exatamente R$ 100
+let compraGrande = subtotal >= 100; 
+
+// 
+let aplicaFreteGratis = freteGratis && compraGrande; // E lógico
+let precisaFrete = !freteGratis; // negação
+
+let totalFinal = totalComDesconto;
+
+if (aplicaFreteGratis) {
+    totalFinal += 0; 
+} else {
+    totalFinal += 15;
+}
+
+// CORREÇÃO: Mensagem agora depende se o frete foi de fato APLICADO
+let mensagemFrete = aplicaFreteGratis ? "Frete grátis disponível!" : "Frete será cobrado";
+
+document.getElementById("saida").innerHTML = `
+Preço unitário: R$ ${precoProduto.toFixed(2)} <br>
+Quantidade: ${quantidade} <br><br>
+
+Subtotal (preço * quantidade): R$ ${subtotal.toFixed(2)} <br>
+Desconto (${cupomDesconto}%): R$ ${desconto.toFixed(2)} <br>
+Total com desconto: R$ ${totalComDesconto.toFixed(2)} <br><br>
+
+Distância entrega: ${distanciaEntrega} km <br>
+${mensagemFrete} <br><br>
+
+Frete grátis aplicado? ${aplicaFreteGratis} <br>
+Total final: R$ ${totalFinal.toFixed(2)}
+`;
+</script>
+
+</body>
+</html>

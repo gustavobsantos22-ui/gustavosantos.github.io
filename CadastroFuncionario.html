@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoffeeMart | Área do Funcionário</title>
+    <style>
+        /* Reset e Estilos de Base */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        
+        body { 
+            height: 100vh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            background-color: #021a44; 
+        }
+
+        .login-card { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3); 
+            width: 100%;
+            max-width: 380px; 
+        }
+
+        .header { text-align: center; margin-bottom: 25px; }
+        .header h1 { color: #064497; font-size: 28px; }
+        .header h1 span { color: #f39c12; }
+        .header p { color: #666; font-size: 12px; font-weight: bold; letter-spacing: 1px; margin-top: 5px; }
+
+        .titulo-secao { 
+            border-left: 4px solid #f39c12; 
+            padding-left: 10px; 
+            margin-bottom: 20px; 
+            color: #333; 
+            font-size: 18px; 
+            font-weight: bold;
+        }
+
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-size: 13px; color: #555; margin-bottom: 5px; font-weight: bold; }
+        
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid #ddd; 
+            border-radius: 6px; 
+            background: #f9f9f9; 
+            outline: none; 
+            text-align: center; 
+            font-size: 16px; 
+            transition: border-color 0.3s;
+        }
+        input:focus { border-color: #064497; background: #fff; }
+
+        .login-btn { 
+            width: 100%; 
+            padding: 12px; 
+            background: #064497; 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            font-size: 16px; 
+            margin-top: 10px; 
+            transition: background 0.3s;
+        }
+        .login-btn:hover { background: #043372; }
+
+        #msg-erro { 
+            color: #e74c3c; 
+            font-size: 13px; 
+            text-align: center; 
+            margin-bottom: 15px; 
+            display: none; 
+            padding: 8px;
+            background: #fdeaea;
+            border-radius: 4px;
+        }
+
+        .links-uteis { 
+            margin-top: 25px; 
+            padding-top: 15px; 
+            border-top: 1px solid #eee; 
+            text-align: center; 
+        }
+        .links-uteis a { 
+            color: #666; 
+            text-decoration: none; 
+            font-size: 13px; 
+            transition: color 0.2s;
+        }
+        .links-uteis a:hover { color: #064497; text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <div class="header">
+        <h1>Coffee<span>Mart</span></h1>
+        <p>PAINEL ADMINISTRATIVO</p>
+    </div>
+
+    <div class="titulo-secao">Acesso Restrito</div>
+    
+    <p id="msg-erro">Acesso negado: Código ou Senha inválidos!</p>
+
+    <form id="funcForm">
+        <div class="form-group">
+            <label for="codigoInput">Código de Acesso (ID):</label>
+            <input type="text" id="codigoInput" placeholder="Digite o código interno" required autocomplete="username">
+        </div>
+        
+        <div class="form-group">
+            <label for="senhaInput">Senha:</label>
+            <input type="password" id="senhaInput" placeholder="********" required autocomplete="current-password">
+        </div>
+
+        <button type="submit" class="login-btn">ENTRAR NO SISTEMA</button>
+    </form>
+
+    <div class="links-uteis">
+        <a href="LOGIN.html ">← Voltar para Área do Cliente</a>
+    </div>
+</div>
+
+<script>
+class Auth {
+    constructor() {
+        this.CODIGO_CORRETO = "4002";
+        this.SENHA_CORRETA = "admin123";
+    }
+
+    validar(codigo, senha) {
+        return codigo === this.CODIGO_CORRETO && senha === this.SENHA_CORRETA;
+    }
+
+    criarSessao() {
+        localStorage.setItem('sessao_admin', 'ativa');
+    }
+
+    limparSessao() {
+        localStorage.removeItem('sessao_admin');
+    }
+
+    estaLogado() {
+        return localStorage.getItem('sessao_admin') === 'ativa';
+    }
+}
+
+class Login {
+    constructor(auth) {
+        this.auth = auth;
+
+        this.form = document.getElementById('funcForm');
+        this.inputCodigo = document.getElementById('codigoInput');
+        this.inputSenha = document.getElementById('senhaInput');
+        this.msgErro = document.getElementById('msg-erro');
+    }
+
+    iniciar() {
+        this.form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.processarLogin();
+        });
+    }
+
+    processarLogin() {
+        const codigo = this.inputCodigo.value;
+        const senha = this.inputSenha.value;
+
+        if (this.auth.validar(codigo, senha)) {
+            this.loginSucesso();
+        } else {
+            this.loginErro();
+        }
+    }
+
+    loginSucesso() {
+        this.auth.criarSessao();
+
+        alert("Acesso autorizado! Bem-vindo ao controle de estoque.");
+        window.location.href = "estoque.html";
+    }
+
+    loginErro() {
+        this.msgErro.style.display = 'block';
+        this.inputSenha.value = "";
+        this.inputCodigo.focus();
+    }
+}
+
+class App {
+    constructor() {
+        this.auth = new Auth();
+        this.login = new Login(this.auth);
+    }
+
+    iniciar() {
+        this.login.iniciar();
+    }
+}
+
+// Inicialização
+const app = new App();
+app.iniciar();
+</script>
+
+</body>
+</html>

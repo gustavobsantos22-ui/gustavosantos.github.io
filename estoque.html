@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoffeeMart | Painel de Estoque</title>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+
+        body { background: #f4f7f6; padding: 40px; }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .btn-voltar {
+            text-decoration: none;
+            color: #064497;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: 0.2s;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+
+        .btn-voltar:hover { color: #f39c12; }
+
+        h1 {
+            color: #064497;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #f39c12;
+            padding-bottom: 10px;
+        }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #064497;
+            color: white;
+        }
+
+        input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 100%;
+            font-size: 14px;
+        }
+
+        input:focus {
+            border-color: #f39c12;
+            outline: none;
+        }
+
+        .btn-salvar {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-weight: bold;
+            width: 100%;
+            font-size: 1em;
+            transition: 0.3s;
+        }
+
+        .btn-salvar:hover { background: #219150; }
+
+        .alerta {
+            color: #27ae60;
+            font-weight: bold;
+            display: none;
+            margin-top: 15px;
+            text-align: center;
+            padding: 10px;
+            background: #eafff2;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <a href="Mercado.html" class="btn-voltar">← Voltar para a Loja (Mercado)</a>
+
+    <h1>📦 Gestão de Estoque - CoffeeMart</h1>
+    <p>Altere os preços e nomes abaixo. As mudanças refletem no Mercado após salvar.</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Produto</th>
+                <th>Preço (R$)</th>
+                <th>Categoria</th>
+            </tr>
+        </thead>
+        <tbody id="tabela-estoque"></tbody>
+    </table>
+
+    <button class="btn-salvar" onclick="app.salvar()">Salvar e Atualizar Loja</button>
+    <p id="msg-sucesso" class="alerta">✅ Estoque atualizado com sucesso!</p>
+</div>
+
+<script>
+class Produto {
+    constructor(id, nome, preco, categoria) {
+        this.id = id;
+        this.nome = nome;
+        this.preco = preco;
+        this.categoria = categoria;
+    }
+}
+
+class Estoque {
+    constructor() {
+        this.produtos = this.carregar() || this.getPadrao();
+    }
+
+    getPadrao() {
+        return [
+            new Produto(1, "Café Torrado Premium 500g", 24.90, "Cafés"),
+            new Produto(2, "Leite Integral Tipo A 1L", 5.50, "Laticínios"),
+            new Produto(3, "Pão Caseiro Artesanal", 8.00, "Padaria"),
+            new Produto(4, "Açúcar Refinado 1kg", 4.20, "Mercearia"),
+            new Produto(5, "Arroz Tio Jorge 5kg",   29.90, "Mercearia"),
+            new Produto(6, "Feijão Carioca 1kg", 7.80, "Mercearia"),
+            new Produto(7, "Manteiga Aviação 200g", 12.50, "Laticínios"),
+            new Produto(8, "Biscoito Recheado", 3.50, "Doces")
+        ];
+    }
+
+    carregar() {
+        const dados = JSON.parse(localStorage.getItem('banco_estoque'));
+        if (!dados) return null;
+
+        return dados.map(p => new Produto(p.id, p.nome, p.preco, p.categoria));
+    }
+
+    salvar() {
+        localStorage.setItem('banco_estoque', JSON.stringify(this.produtos));
+    }
+
+    atualizar(index, campo, valor) {
+        if (campo === 'preco') {
+            this.produtos[index][campo] = parseFloat(valor) || 0;
+        } else {
+            this.produtos[index][campo] = valor;
+        }
+    }
+}
+
+class Interface {
+    constructor(estoque) {
+        this.estoque = estoque;
+        this.tabela = document.getElementById('tabela-estoque');
+        this.msg = document.getElementById('msg-sucesso');
+    }
+
+    renderizar() {
+        this.tabela.innerHTML = "";
+
+        this.estoque.produtos.forEach((prod, index) => {
+            this.tabela.innerHTML += `
+                <tr>
+                    <td>${prod.id}</td>
+                    <td><input type="text" value="${prod.nome}" data-index="${index}" data-campo="nome"></td>
+                    <td><input type="number" step="0.01" value="${prod.preco}" data-index="${index}" data-campo="preco"></td>
+                    <td>${prod.categoria}</td>
+                </tr>
+            `;
+        });
+
+        this.adicionarEventos();
+    }
+
+    adicionarEventos() {
+        const inputs = this.tabela.querySelectorAll("input");
+
+        inputs.forEach(input => {
+            input.addEventListener("change", (e) => {
+                const index = e.target.dataset.index;
+                const campo = e.target.dataset.campo;
+                const valor = e.target.value;
+
+                this.estoque.atualizar(index, campo, valor);
+            });
+        });
+    }
+
+    mostrarMensagem() {
+        this.msg.style.display = "block";
+
+        setTimeout(() => {
+            this.msg.style.display = "none";
+        }, 3000);
+    }
+}
+
+class App {
+    constructor() {
+        this.estoque = new Estoque();
+        this.ui = new Interface(this.estoque);
+    }
+
+    iniciar() {
+        this.ui.renderizar();
+    }
+
+    salvar() {
+        this.estoque.salvar();
+        this.ui.mostrarMensagem();
+    }
+}
+
+const app = new App();
+app.iniciar();
+</script>
+
+</body>
+</html>

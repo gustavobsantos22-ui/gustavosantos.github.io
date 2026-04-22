@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoffeeMart Premium | Mercado Digital</title>
+    <style>
+        /* Estilos Base e Google Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+
+        body { background: #f4f7f6; display: flex; flex-direction: column; min-height: 100vh; }
+        
+        header { 
+            background: #064497; 
+            color: white; 
+            padding: 20px 50px; 
+            text-align: center; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+            position: relative;
+        }
+        header h1 { font-size: 2em; font-weight: 700; color: #fff; }
+        header h1 span { color: #f39c12; }
+
+        .logout-btn {
+            position: absolute;
+            right: 50px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            text-decoration: none;
+            padding: 8px 18px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+        .logout-btn:hover {
+            background: #e74c3c;
+            border-color: #e74c3c;
+            box-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+        }
+
+        .wrapper { 
+            display: flex; 
+            max-width: 1400px; 
+            margin: auto; 
+            width: 100%; 
+            padding: 30px; 
+            gap: 20px;
+        }
+
+        .vitrine { 
+            flex: 3; 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); 
+            gap: 20px; 
+        }
+
+        .item { 
+            background: white; 
+            padding: 25px; 
+            border-radius: 12px; 
+            text-align: center; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05); 
+            transition: transform 0.3s ease; 
+        }
+        .item:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .item h3 { color: #333; font-size: 1.1em; margin-bottom: 10px; font-weight: 600; min-height: 50px; }
+        
+        .item .categoria { 
+            background: #eef2f7; 
+            color: #555; 
+            padding: 4px 12px; 
+            border-radius: 20px; 
+            font-size: 0.75em; 
+            margin-bottom: 15px; 
+            display: inline-block; 
+        }
+
+        .preco { color: #27ae60; font-weight: 700; font-size: 1.4em; margin: 15px 0; }
+
+        .add-btn { 
+            background: #f39c12; 
+            color: white; 
+            border: none; 
+            padding: 12px; 
+            width: 100%; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 1em; 
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .add-btn:hover { background: #e67e22; }
+
+        .carrinho { 
+            flex: 1; 
+            background: white; 
+            padding: 25px; 
+            border-radius: 12px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05); 
+            position: sticky; 
+            top: 30px; 
+            height: fit-content;
+            max-height: calc(100vh - 60px); 
+            display: flex; 
+            flex-direction: column; 
+        }
+        .carrinho h2 { color: #064497; text-align: center; margin-bottom: 20px; font-weight: 700; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        
+        #cart-items-list { list-style: none; overflow-y: auto; flex: 1; padding-right: 5px; margin-bottom: 20px; }
+        
+        .cart-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 10px 0; 
+            border-bottom: 1px solid #f1f1f1; 
+            font-size: 0.9em; 
+        }
+
+        .cart-resumo { border-top: 2px solid #eee; padding-top: 15px; }
+        .total-container { display: flex; justify-content: space-between; font-size: 1.2em; font-weight: bold; color: #333; margin-bottom: 20px; }
+        #cart-total { color: #27ae60; }
+
+        .checkout-btn { 
+            background: #064497; 
+            color: white; 
+            border: none; 
+            padding: 15px; 
+            width: 100%; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 1.1em; 
+            font-weight: 600; 
+            text-transform: uppercase; 
+            transition: 0.2s; 
+        }
+        .checkout-btn:hover { background: #043372; }
+
+        @media (max-width: 900px) {
+            header { padding: 20px; }
+            .logout-btn { position: static; display: inline-block; transform: none; margin-top: 15px; }
+            .wrapper { flex-direction: column; }
+            .carrinho { position: static; height: auto; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>☕ Mercado <span>CoffeeMart</span> Premium</h1>
+    <a href="Login.html" class="logout-btn">Sair / Trocar Conta</a>
+</header>
+
+<div class="wrapper">
+    <div class="vitrine" id="product-vitrine"></div>
+
+    <aside class="carrinho">
+        <h2>🛒 Meu Carrinho</h2>
+        <ul id="cart-items-list">
+            <li style='text-align:center; color:#888; margin-top:20px;'>Carrinho vazio.</li>
+        </ul>
+        
+        <div class="cart-resumo">
+            <div class="total-container">
+                <span>Total:</span>
+                <span id="cart-total">R$ 0,00</span>
+            </div>
+            <button class="checkout-btn" id="btn-finalizar">Finalizar Compra</button>
+        </div>
+    </aside>
+</div>
+
+<script>
+    /**
+     * CLASSE MODELO: Gerencia os dados do estoque
+     */
+    class Estoque {
+        constructor(dadosIniciais) {
+            this.STORAGE_KEY = 'banco_estoque';
+            this.produtos = JSON.parse(localStorage.getItem(this.STORAGE_KEY)) || dadosIniciais;
+        }
+
+        getTodos() {
+            return this.produtos;
+        }
+
+        buscarPorId(id) {
+            return this.produtos.find(p => p.id === id);
+        }
+    }
+
+    /**
+     * CLASSE MODELO: Gerencia os itens do carrinho
+     */
+    class CarrinhoManager {
+        constructor() {
+            this.itens = [];
+        }
+
+        adicionar(produto) {
+            const itemExistente = this.itens.find(item => item.id === produto.id);
+            if (itemExistente) {
+                itemExistente.quantidade++;
+            } else {
+                this.itens.push({ ...produto, quantidade: 1 });
+            }
+        }
+
+        limpar() {
+            this.itens = [];
+        }
+
+        calcularTotal() {
+            return this.itens.reduce((soma, item) => soma + (item.preco * item.quantidade), 0);
+        }
+
+        estaVazio() {
+            return this.itens.length === 0;
+        }
+    }
+
+    /**
+     * CLASSE CONTROLADORA: Gerencia a Interface e eventos
+     */
+    class MercadoApp {
+        constructor(dadosProdutos) {
+            this.estoque = new Estoque(dadosProdutos);
+            this.carrinho = new CarrinhoManager();
+            
+            // Elementos
+            this.vitrineEl = document.getElementById('product-vitrine');
+            this.listaCartEl = document.getElementById('cart-items-list');
+            this.totalEl = document.getElementById('cart-total');
+            this.btnFinalizar = document.getElementById('btn-finalizar');
+
+            this.init();
+        }
+
+        init() {
+            this.renderizarVitrine();
+            this.btnFinalizar.addEventListener('click', () => this.finalizarCompra());
+        }
+
+        formatarMoeda(valor) {
+            return `R$ ${valor.toFixed(2).replace('.', ',')}`;
+        }
+
+        renderizarVitrine() {
+            this.vitrineEl.innerHTML = "";
+            this.estoque.getTodos().forEach(produto => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'item';
+                itemDiv.innerHTML = `
+                    <span class="categoria">${produto.categoria}</span>
+                    <h3>${produto.nome}</h3>
+                    <p class="preco">${this.formatarMoeda(produto.preco)}</p>
+                    <button class="add-btn">Adicionar</button>
+                `;
+                
+                itemDiv.querySelector('.add-btn').onclick = () => this.adicionar(produto.id);
+                this.vitrineEl.appendChild(itemDiv);
+            });
+        }
+
+        adicionar(id) {
+            const produto = this.estoque.buscarPorId(id);
+            if (produto) {
+                this.carrinho.adicionar(produto);
+                this.atualizarCarrinhoUI();
+            }
+        }
+
+        atualizarCarrinhoUI() {
+            this.listaCartEl.innerHTML = "";
+            
+            if (this.carrinho.estaVazio()) {
+                this.listaCartEl.innerHTML = "<li style='text-align:center; color:#888; margin-top:20px;'>Carrinho vazio.</li>";
+            } else {
+                this.carrinho.itens.forEach(item => {
+                    const subtotal = item.preco * item.quantidade;
+                    this.listaCartEl.innerHTML += `
+                        <li class="cart-item">
+                            <span>${item.nome} (x${item.quantidade})</span>
+                            <strong>${this.formatarMoeda(subtotal)}</strong>
+                        </li>
+                    `;
+                });
+            }
+            this.totalEl.innerText = this.formatarMoeda(this.carrinho.calcularTotal());
+        }
+
+        finalizarCompra() {
+            if (this.carrinho.estaVazio()) {
+                alert("⚠️ Seu carrinho está vazio!");
+                return;
+            }
+            alert("✅ Compra finalizada com sucesso! Obrigado por comprar no CoffeeMart.");
+            this.carrinho.limpar();
+            this.atualizarCarrinhoUI();
+        }
+    }
+
+    // Dados Iniciais
+    const PRODUTOS_DB = [
+        {id: 1, nome: "Café Torrado Premium 500g", preco: 24.90, categoria: "Cafés"},
+        {id: 2, nome: "Leite Integral Tipo A 1L", preco: 5.50, categoria: "Laticínios"},
+        {id: 3, nome: "Pão Caseiro Artesanal", preco: 8.00, categoria: "Padaria"},
+        {id: 4, nome: "Açúcar Refinado 1kg", preco: 4.20, categoria: "Mercearia"},
+        {id: 5, nome: "Arroz Tio Jorge 5kg", preco: 29.90, categoria: "Mercearia"},
+        {id: 6, nome: "Feijão Carioca 1kg", preco: 7.80, categoria: "Mercearia"},
+        {id: 7, nome: "Manteiga Aviação 200g", preco: 12.50, categoria: "Laticínios"},
+        {id: 8, nome: "Biscoito Recheado", preco: 3.50, categoria: "Doces"}
+        
+    ];
+
+    // Ligar o App
+    const app = new MercadoApp(PRODUTOS_DB);
+</script>
+
+</body>
+</html>
